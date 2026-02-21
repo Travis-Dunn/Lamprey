@@ -68,17 +68,29 @@ class PlayerGun:
         self.traverse = math.radians(INITIAL_TRAVERSE_DEG)
         self.reload_timer = 0.0            # 0 = ready
         self.ready = True
+        self._traverse_ramp = 0.0          # ramp-up timer for fast traverse
 
     def update(self, dt, keys_held):
         """Process input and update gun state."""
         import pygame
 
-        # Determine traverse speed: fast if shift is held, slow otherwise
+        # Determine traverse speed with ramp-up for fast mode
         shift_held = keys_held[pygame.K_LSHIFT] or keys_held[pygame.K_RSHIFT]
-        if shift_held:
-            traverse_speed = math.radians(TRAVERSE_SPEED_FAST_DEG)
+        traversing = keys_held[pygame.K_a] or keys_held[pygame.K_d]
+
+        if shift_held and traversing:
+            # Ramp up toward fast speed
+            self._traverse_ramp = min(self._traverse_ramp + dt,
+                                      TRAVERSE_RAMP_TIME)
         else:
-            traverse_speed = math.radians(TRAVERSE_SPEED_DEG)
+            # Reset ramp when shift released or not traversing
+            self._traverse_ramp = 0.0
+
+        # Lerp between slow and fast based on ramp progress
+        t = self._traverse_ramp / TRAVERSE_RAMP_TIME if TRAVERSE_RAMP_TIME > 0 else 1.0
+        traverse_speed = math.radians(
+            TRAVERSE_SPEED_DEG + (TRAVERSE_SPEED_FAST_DEG - TRAVERSE_SPEED_DEG) * t
+        )
 
         # Traverse (A/D keys)
         if keys_held[pygame.K_a]:

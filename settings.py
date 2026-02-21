@@ -32,8 +32,9 @@ COL_DUST        = (190, 170, 110)
 COL_HIT         = (255, 90, 20)
 
 # ── Gun Controls ─────────────────────────────────────────
-TRAVERSE_SPEED_DEG      = 2.0               # degrees per second (fine/slow)
-TRAVERSE_SPEED_FAST_DEG = 24.0              # degrees per second (shift held)
+TRAVERSE_SPEED_DEG      = 3.0               # degrees per second (fine/slow)
+TRAVERSE_SPEED_FAST_DEG = 12.0              # degrees per second (shift held)
+TRAVERSE_RAMP_TIME      = 0.5              # seconds to reach full fast speed
 ELEVATION_SPEED_DEG = 4.0
 RELOAD_TIME         = 5.0                   # seconds
 MIN_ELEVATION_DEG   = -4.0
