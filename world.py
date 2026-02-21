@@ -72,13 +72,21 @@ class PlayerGun:
     def update(self, dt, keys_held):
         """Process input and update gun state."""
         import pygame
-        # Traverse
-        if keys_held[pygame.K_LEFT]:
-            self.traverse -= math.radians(TRAVERSE_SPEED_DEG) * dt
-        if keys_held[pygame.K_RIGHT]:
-            self.traverse += math.radians(TRAVERSE_SPEED_DEG) * dt
 
-        # Elevation
+        # Determine traverse speed: fast if shift is held, slow otherwise
+        shift_held = keys_held[pygame.K_LSHIFT] or keys_held[pygame.K_RSHIFT]
+        if shift_held:
+            traverse_speed = math.radians(TRAVERSE_SPEED_FAST_DEG)
+        else:
+            traverse_speed = math.radians(TRAVERSE_SPEED_DEG)
+
+        # Traverse (A/D keys)
+        if keys_held[pygame.K_a]:
+            self.traverse -= traverse_speed * dt
+        if keys_held[pygame.K_d]:
+            self.traverse += traverse_speed * dt
+
+        # Elevation (arrow keys up/down)
         if keys_held[pygame.K_UP]:
             self.elevation += math.radians(ELEVATION_SPEED_DEG) * dt
         if keys_held[pygame.K_DOWN]:
