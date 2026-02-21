@@ -70,6 +70,7 @@ class PlayerGun:
         self.ready = True
         self._traverse_ramp = 0.0          # ramp-up timer for fast traverse
         self.is_traversing = False         # set each frame for audio
+        self.is_elevating = False           # set each frame for audio
 
     def update(self, dt, keys_held):
         """Process input and update gun state."""
@@ -79,6 +80,8 @@ class PlayerGun:
         shift_held = keys_held[pygame.K_LSHIFT] or keys_held[pygame.K_RSHIFT]
         traversing = keys_held[pygame.K_a] or keys_held[pygame.K_d]
         self.is_traversing = traversing
+        elevating = keys_held[pygame.K_w] or keys_held[pygame.K_s]
+        self.is_elevating = elevating
 
         if shift_held and traversing:
             # Ramp up toward fast speed
@@ -101,9 +104,9 @@ class PlayerGun:
             self.traverse -= traverse_speed * dt
 
         # Elevation (arrow keys up/down)
-        if keys_held[pygame.K_UP]:
+        if keys_held[pygame.K_w]:
             self.elevation += math.radians(ELEVATION_SPEED_DEG) * dt
-        if keys_held[pygame.K_DOWN]:
+        if keys_held[pygame.K_s]:
             self.elevation -= math.radians(ELEVATION_SPEED_DEG) * dt
 
         # Clamp elevation

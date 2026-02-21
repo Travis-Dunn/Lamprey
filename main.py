@@ -31,6 +31,7 @@ def main():
     audio.register("fire",    "sounds/gun.ogg",      loop=False)
     # audio.register("hit",     "sounds/hit.ogg",     loop=False)
     # audio.register("ambient", "sounds/ambient.ogg", loop=True, base_volume=0.3)
+    audio.register("elevate", "sounds/elevate.ogg", loop=True, base_volume=0.05)
 
     running = True
     while running:
@@ -54,6 +55,7 @@ def main():
 
         # ── Audio ────────────────────────────────────────
         audio.set_active("traverse", world.gun.is_traversing)
+        audio.set_active("elevate", world.gun.is_elevating)
         audio.update(dt)
 
         # ── Draw ─────────────────────────────────────────
