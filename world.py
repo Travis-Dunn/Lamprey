@@ -94,9 +94,9 @@ class PlayerGun:
 
         # Traverse (A/D keys)
         if keys_held[pygame.K_a]:
-            self.traverse -= traverse_speed * dt
-        if keys_held[pygame.K_d]:
             self.traverse += traverse_speed * dt
+        if keys_held[pygame.K_d]:
+            self.traverse -= traverse_speed * dt
 
         # Elevation (arrow keys up/down)
         if keys_held[pygame.K_UP]:
