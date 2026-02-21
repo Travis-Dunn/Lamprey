@@ -84,3 +84,8 @@ SPOTTER_MIN_CORRECTION = 10                # below this, call it "on target"
 EXPLOSION_DURATION   = 1.8                  # seconds
 DUST_BASE_RADIUS     = 18                   # pixels in sight (scaled by distance)
 HIT_BASE_RADIUS      = 25
+
+# ── Audio ────────────────────────────────────────────────
+AUDIO_MASTER_VOLUME = 0.8                   # 0.0–1.0 global volume
+AUDIO_RAMP_TIME     = 0.15                  # seconds for looping sounds to fade in/out
+AUDIO_TRAVERSE_VOL  = 0.6                   # base volume for traverse motor
