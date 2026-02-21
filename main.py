@@ -28,7 +28,7 @@ def main():
     audio.register("traverse", "sounds/traverse.ogg",
                    loop=True, base_volume=AUDIO_TRAVERSE_VOL)
     # Future slots:
-    # audio.register("fire",    "sounds/fire.ogg",    loop=False)
+    audio.register("fire",    "sounds/gun.ogg",      loop=False)
     # audio.register("hit",     "sounds/hit.ogg",     loop=False)
     # audio.register("ambient", "sounds/ambient.ogg", loop=True, base_volume=0.3)
 
@@ -45,8 +45,8 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 elif event.key == pygame.K_SPACE:
-                    world.fire()
-                    # audio.play_oneshot("fire")  # uncomment when asset exists
+                    if world.fire():
+                        audio.play_oneshot("fire")
 
         # ── Update ───────────────────────────────────────
         keys = pygame.key.get_pressed()
