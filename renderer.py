@@ -27,6 +27,7 @@ class Renderer:
 
         self.font_small = pygame.font.SysFont("consolas", 18)
         self.font_large = pygame.font.SysFont("consolas", 26, bold=True)
+        self.font_gauge = pygame.font.SysFont("consolas", 12)
 
     # ── Coordinate helpers ───────────────────────────────
 
@@ -77,6 +78,8 @@ class Renderer:
 
         # HUD elements (outside the sight)
         self._draw_hud(world)
+        self._draw_azimuth_gauge(world)
+        self._draw_elevation_gauge(world)
         self._draw_spotter_callouts(world)
 
     # ── Sky & ground fill ────────────────────────────────
@@ -343,7 +346,7 @@ class Renderer:
     # ── HUD ──────────────────────────────────────────────
 
     def _draw_hud(self, world):
-        """Draw reload indicator, score, and angle readouts."""
+        """Draw reload indicator, score, and range estimate."""
         gun = world.gun
 
         # ── Reload indicator ─────────────────────────────
@@ -373,15 +376,6 @@ class Renderer:
             (ind_x, ind_y, ind_w, ind_h), 1)
         self.screen.blit(label, (ind_x - 4, ind_y + ind_h + 6))
 
-        # ── Angle readout ────────────────────────────────
-        elev_deg = math.degrees(gun.elevation)
-        trav_deg = math.degrees(gun.traverse)
-        txt = self.font_small.render(
-            f"EL {elev_deg:+.1f}°  TR {trav_deg:+.1f}°",
-            True, COL_HUD_TEXT)
-        self.screen.blit(txt, (self.cx - txt.get_width() // 2,
-                                self.cy + SIGHT_RADIUS + 16))
-
         # ── Score ────────────────────────────────────────
         score_txt = self.font_large.render(
             f"KILLS: {world.score}", True, COL_HUD_TEXT)
@@ -407,6 +401,159 @@ class Renderer:
                 self.screen.blit(range_txt,
                                  (SCREEN_WIDTH - range_txt.get_width() - 20, 20))
                 break
+
+    # ── Azimuth Gauge (M19) ──────────────────────────────
+
+    def _draw_azimuth_gauge(self, world):
+        """
+        Draw a simplified M19 Azimuth Indicator below the sight.
+
+        Fixed outer ring with tick marks numbered 0 (hull forward)
+        to 50 (hull rear), identical on both sides.  Rotating inner
+        pointer shows current turret facing.
+        """
+        gun = world.gun
+        r = AZIMUTH_GAUGE_RADIUS
+
+        # Center position: below the sight
+        gx = self.cx
+        gy = self.cy + SIGHT_RADIUS + 20 + r
+
+        # ── Background & bezel ───────────────────────────
+        pygame.draw.circle(self.screen, GAUGE_BG_COLOR, (gx, gy), r)
+        pygame.draw.circle(self.screen, GAUGE_RING_COLOR, (gx, gy), r, 2)
+        # Inner ring where the pointer lives
+        pygame.draw.circle(self.screen, GAUGE_RING_COLOR,
+                           (gx, gy), r - 18, 1)
+
+        # ── Outer ring tick marks (0–50 each side) ───────
+        # Each M19 unit = pi/50 radians of turret rotation.
+        # Drawing convention:  angle = 0 at 12 o'clock, positive = CW.
+        #   screen x = gx + r * sin(angle)
+        #   screen y = gy - r * cos(angle)
+        for side in (1, -1):                # +1 = right (CW), -1 = left (CCW)
+            for unit in range(0, AZIMUTH_M19_MAX + 1):
+                if side == -1 and (unit == 0 or unit == AZIMUTH_M19_MAX):
+                    continue                # 0 and 50 shared between sides
+
+                angle = side * unit * math.pi / AZIMUTH_M19_MAX
+                sa = math.sin(angle)
+                ca = math.cos(angle)
+
+                # Tick length depends on significance
+                if unit % 10 == 0:
+                    tick_inner = r - 16
+                    tick_outer = r - 3
+                    draw_number = True
+                elif unit % 5 == 0:
+                    tick_inner = r - 12
+                    tick_outer = r - 3
+                    draw_number = True
+                else:
+                    tick_inner = r - 8
+                    tick_outer = r - 3
+                    draw_number = False
+
+                x1 = gx + sa * tick_outer
+                y1 = gy - ca * tick_outer
+                x2 = gx + sa * tick_inner
+                y2 = gy - ca * tick_inner
+                pygame.draw.line(self.screen, GAUGE_MARK_COLOR,
+                                 (int(x1), int(y1)),
+                                 (int(x2), int(y2)), 1)
+
+                # Number labels
+                if draw_number:
+                    label = self.font_gauge.render(str(unit), True,
+                                                   GAUGE_MARK_COLOR)
+                    lw, lh = label.get_size()
+                    nr = r - 24              # number radius
+                    nx = gx + sa * nr - lw / 2
+                    ny = gy - ca * nr - lh / 2
+                    self.screen.blit(label, (int(nx), int(ny)))
+
+        # ── Hull-forward lubber line ─────────────────────
+        pygame.draw.line(self.screen, GAUGE_LUBBER_COLOR,
+                         (gx, gy - r + 2),
+                         (gx, gy - r + 14), 3)
+
+        # ── Turret pointer (rotates with traverse) ───────
+        # Positive traverse = turret left → pointer goes CCW on dial
+        # so screen angle = -traverse  (CW positive in our drawing)
+        ptr_angle = -gun.traverse
+        ptr_len = r - 20
+        px = gx + math.sin(ptr_angle) * ptr_len
+        py = gy - math.cos(ptr_angle) * ptr_len
+
+        # Draw pointer line
+        pygame.draw.line(self.screen, GAUGE_NEEDLE_COLOR,
+                         (gx, gy), (int(px), int(py)), 2)
+        # Tail nub (short line opposite the pointer)
+        tail_len = 10
+        tx = gx - math.sin(ptr_angle) * tail_len
+        ty = gy + math.cos(ptr_angle) * tail_len
+        pygame.draw.line(self.screen, GAUGE_NEEDLE_COLOR,
+                         (gx, gy), (int(tx), int(ty)), 2)
+        # Center pivot dot
+        pygame.draw.circle(self.screen, GAUGE_NEEDLE_COLOR, (gx, gy), 3)
+
+    # ── Elevation Gauge ──────────────────────────────────
+
+    def _draw_elevation_gauge(self, world):
+        """
+        Draw a qualitative arc gauge for gun elevation,
+        left of the sight.  No tick marks — just an arc with
+        end-stops and a needle.  Gives the player the kind of
+        coarse feel a real gunner had from the breech position
+        and resistance in the elevation wheel.
+        """
+        gun = world.gun
+        arc_r = ELEV_ARC_RADIUS
+
+        # Pivot position: left of sight, vertically centered
+        gx = self.cx - SIGHT_RADIUS - 50
+        gy = self.cy + 10
+
+        # Map elevation to a visual needle angle.
+        # Convention:  needle direction measured as an angle from
+        # the negative-X axis (pointing left), positive = upward.
+        #   screen_x = gx - arc_r * cos(dir)
+        #   screen_y = gy - arc_r * sin(dir)
+        min_elev = math.radians(MIN_ELEVATION_DEG)
+        max_elev = math.radians(MAX_ELEVATION_DEG)
+        t = (gun.elevation - min_elev) / (max_elev - min_elev)
+        t = max(0.0, min(1.0, t))
+
+        vis_min = math.radians(ELEV_VISUAL_MIN_DEG)
+        vis_max = math.radians(ELEV_VISUAL_MAX_DEG)
+        needle_dir = vis_min + t * (vis_max - vis_min)
+
+        # ── Arc track ────────────────────────────────────
+        arc_pts = []
+        steps = 48
+        for i in range(steps + 1):
+            d = vis_min + (vis_max - vis_min) * i / steps
+            x = gx - arc_r * math.cos(d)
+            y = gy - arc_r * math.sin(d)
+            arc_pts.append((int(x), int(y)))
+        if len(arc_pts) > 1:
+            pygame.draw.lines(self.screen, GAUGE_RING_COLOR,
+                              False, arc_pts, 2)
+
+        # ── End-stops (pegs) ─────────────────────────────
+        for d in (vis_min, vis_max):
+            sx = int(gx - arc_r * math.cos(d))
+            sy = int(gy - arc_r * math.sin(d))
+            pygame.draw.circle(self.screen, GAUGE_MARK_COLOR,
+                               (sx, sy), ELEV_STOP_RADIUS)
+
+        # ── Needle ───────────────────────────────────────
+        nx = gx - arc_r * 0.9 * math.cos(needle_dir)
+        ny = gy - arc_r * 0.9 * math.sin(needle_dir)
+        pygame.draw.line(self.screen, GAUGE_NEEDLE_COLOR,
+                         (gx, gy), (int(nx), int(ny)), 2)
+        # Pivot dot
+        pygame.draw.circle(self.screen, GAUGE_NEEDLE_COLOR, (gx, gy), 3)
 
     # ── Spotter Callouts ─────────────────────────────────
 
@@ -438,10 +585,6 @@ class Renderer:
         self.screen.blit(panel_surf, (base_x, base_y))
 
         # "SPOTTER:" header
-        header_col = (180, 180, 160, alpha)
-        # Pygame font doesn't support per-pixel alpha in render, so we
-        # use a workaround: render at full alpha, then blit with a
-        # translucent surface
         header = self.font_small.render("SPOTTER:", True,
                                          (180, 180, 160))
         if alpha < 255:

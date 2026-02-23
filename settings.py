@@ -85,6 +85,20 @@ EXPLOSION_DURATION   = 1.8                  # seconds
 DUST_BASE_RADIUS     = 18                   # pixels in sight (scaled by distance)
 HIT_BASE_RADIUS      = 25
 
+# ── Gauges ───────────────────────────────────────────────
+GAUGE_BG_COLOR       = (25, 22, 18)         # dark bakelite
+GAUGE_RING_COLOR     = (55, 50, 42)         # outer ring / bezel
+GAUGE_MARK_COLOR     = (200, 190, 160)      # cream / radium-paint tick marks
+GAUGE_NEEDLE_COLOR   = (220, 210, 180)      # bright needle
+GAUGE_LUBBER_COLOR   = (200, 60, 40)        # red lubber line (hull forward)
+AZIMUTH_GAUGE_RADIUS = 65                   # pixels
+AZIMUTH_M19_MAX      = 50                   # max M19 reading (= 180 degrees)
+
+ELEV_ARC_RADIUS      = 50                   # pixels, needle length
+ELEV_VISUAL_MIN_DEG  = -35.0               # visual angle at min elevation
+ELEV_VISUAL_MAX_DEG  = 50.0                # visual angle at max elevation
+ELEV_STOP_RADIUS     = 3                    # peg size in pixels
+
 # ── Audio ────────────────────────────────────────────────
 AUDIO_MASTER_VOLUME = 0.8                   # 0.0–1.0 global volume
 AUDIO_RAMP_TIME     = 0.15                  # seconds for looping sounds to fade in/out
